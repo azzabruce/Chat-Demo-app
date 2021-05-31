@@ -46,43 +46,33 @@ app.get('/messages', (req, res) => {//the route is '/messages. then a callback t
 
 })
 //let's create a new message post endpoint in node
-app.post('/messages', (req, res) => {
+app.post('/messages', async (req, res) => {
     // create an object based on Message model and pass req.boy because it contains our message definition
     var messsage = new Message(req.body)
     //let's save it to mongoDB
     //now we can use promises 
-    messsage.save().then(() => {
+    var savedMessage = await messsage.save()
 
-        //let's look into dependency chains to clean code
-        Console.log('saved')
-        return Message.findOne({ message: 'badword' })//since we are returning a proimse instead of handling it with a call back
-        //the next then() will take the result of first promise in a call back 
+    var censored = await Message.findOne({ message: 'badword' })//since we are returning a proimse instead of handling it with a call back
+    //the next then() will take the result of first promise in a call back 
 
-        // this will return undefined since express doesn't have a built in support to parse the body, we need to install body-parser
-        // console.log(req.body)
-        // messages.push(req.body)//add he new message to our message array from postman
-        //let's emit an event from the server to all clients notifying them, there is a new message
+    //stack these chain function
+
+    if (censored)
+        await Message.remove({ _id: censored.id })
+    // this will return undefined since express doesn't have a built in support to parse the body, we need to install body-parser
+    // console.log(req.body)
+    // messages.push(req.body)//add he new message to our message array from postman
+    //let's emit an event from the server to all clients notifying them, there is a new message
+    else
         io.emit('message', req.body)//message is the event and req.body will contain the message
-        res.sendStatus(200)
-    })
-        //stack these chain function
-        .then(censored => {
-
-            if (censored) {
-                console.log('censored word found', censored)
-                Message.deleteOne({ _id: censored.id }, (err) => {
-                    console.log('badword removed')
-                })
-            }
-
-        })
-        .catch((err) => {
-            //if there is an error, send a server erro 500
-            res.sendStatus(500)
-            return console.error(err)
-        })
-
-
+    res.sendStatus(200)
+    //catch will be handled next lesson
+    // .catch((err) => {
+    //     //if there is an error, send a server erro 500
+    //     res.sendStatus(500)
+    //     return console.error(err)
+    // })
 })
 
 //let's find and remove any bad words written in the chat demo app
