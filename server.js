@@ -8,6 +8,7 @@ var http = require('http').Server(app)
 var io = require('socket.io')(http)
 //require mongoose and connect to our remote database
 var mongoose = require('mongoose')
+const { Console } = require('console')
 
 app.use(express.static(__dirname))
 //this let bodyParser know that we expect json to be coming in with http request
@@ -15,7 +16,8 @@ app.use(bodyParser.json())
 //at this point when we click send, we recieve an embty object, because the broweser is urlencoded
 //so we must setup a bodyParser to support that
 app.use(bodyParser.urlencoded({ extended: false }))
-
+//use the built in es6 Promise library, instead of mongoose promises
+mongoose.Promise = Promise
 //creat a dbUrl
 var dbUrl = "mongodb+srv://user:user@cluster0.kj3lc.mongodb.net/test"
 // we want to create a messages Model 
@@ -26,7 +28,7 @@ var Message = mongoose.model('Message', {
 })
 //at this point, we have to refresh the page to see new messages
 //we would need to install socket.ip 
-//needs to tie in with expresswe will create a regular http server with node and share with express and node
+//needs to tie in with express we will create a regular http server with node and share with express and node
 //let's create a placeholder messages list as an array
 //we don't need our message array becuase data is coming from mongodb
 // var messages = [
@@ -48,10 +50,14 @@ app.post('/messages', (req, res) => {
     // create an object based on Message model and pass req.boy because it contains our message definition
     var messsage = new Message(req.body)
     //let's save it to mongoDB
-    messsage.save((err) => {
-        //if there is an error, send a server erro 500
-        if (err)
-            sendStatus(500)
+    //now we can use promises 
+    messsage.save().then(() => {
+
+        //let's look into dependency chains to clean code
+        Console.log('saved')
+        return Message.findOne({ message: 'badword' })//since we are returning a proimse instead of handling it with a call back
+        //the next then() will take the result of first promise in a call back 
+
         // this will return undefined since express doesn't have a built in support to parse the body, we need to install body-parser
         // console.log(req.body)
         // messages.push(req.body)//add he new message to our message array from postman
@@ -59,9 +65,28 @@ app.post('/messages', (req, res) => {
         io.emit('message', req.body)//message is the event and req.body will contain the message
         res.sendStatus(200)
     })
+        //stack these chain function
+        .then(censored => {
+
+            if (censored) {
+                console.log('censored word found', censored)
+                Message.deleteOne({ _id: censored.id }, (err) => {
+                    console.log('badword removed')
+                })
+            }
+
+        })
+        .catch((err) => {
+            //if there is an error, send a server erro 500
+            res.sendStatus(500)
+            return console.error(err)
+        })
 
 
 })
+
+//let's find and remove any bad words written in the chat demo app
+
 //let's set up a callback for the scoket coneection event, that will let us know when a new user connect
 //check for coneection events and will supply a function that takes in a scoket 
 io.on('connection', (socket) => {
