@@ -45,12 +45,23 @@ app.get('/messages', (req, res) => {//the route is '/messages. then a callback t
     })
 
 })
+//add a user parameter
+app.get('/messages/:user', (req, res) => {//the route is '/messages. then a callback to handle the request take in response and give is refernce to res to response to it
+    //instead of sending our message array, we will send messages from mongoDB
+    //to get all the messages in the database (mongodb), we use {} empty brackets
+    //get access to user paramater and set it to req.param.user
+    var user = req.params.user
+    Message.find({ name: user }, (err, messages) => {
+        res.send(messages) // next step is to update the front-end to call the messages from backend
+    })
+
+})
 //let's create a new message post endpoint in node
 app.post('/messages', async (req, res) => {
     //now we can use a more generic form of handling erros and exceptions with try/catch block
     try {
         // create an object based on Message model and pass req.boy because it contains our message definition
-        throw 'error'
+
         var messsage = new Message(req.body)
         //let's save it to mongoDB
         //now we can use promises 
