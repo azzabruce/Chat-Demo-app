@@ -23,6 +23,7 @@ var dbUrl = "mongodb+srv://user:user@cluster0.kj3lc.mongodb.net/test"
 // we want to create a messages Model 
 
 var Message = mongoose.model('Message', {
+    //schema definition
     name: String,
     message: String
 })
@@ -100,9 +101,9 @@ app.post('/messages', async (req, res) => {
 io.on('connection', (socket) => {
     console.log('a user connected')
 })
-//connect to mnogoose
+//connect to mongoose
 mongoose.connect(dbUrl, { seNewUrlParser: true }, (err) => {
-    console.log('mongodb connect is successfull', err)
+    console.log('mongodb connection is successfull', err)
 })
 var server = http.listen(3000, () => {
     console.log('server is listening on port', server.address().port)

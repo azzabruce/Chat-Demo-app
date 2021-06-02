@@ -33,7 +33,7 @@ describe('get messages', () => {
         })
     })
 })
-//test first development, add the test first and make it fail and then we will implement the feature and ake it pass
+//test first development, add the test first and make it fail and then we will implement the feature then make it pass
 //the new feature is a new messages get call or end point that will allow us to get messages from a specifici owner
 //will get the name through a url paramater
 describe('get messages from a user', () => {
